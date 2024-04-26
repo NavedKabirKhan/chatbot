@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChatBot</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // Function to send a message to the chatbot API
+        function sendMessage() {
+            var messageInput = document.getElementById("message-input");
+            var message = messageInput.value;
+            messageInput.value = "";
+
+            // Append the user's message to the chat window
+            appendMessage("User", message);
+
+            // Send the user's message to the chatbot API
+            axios.post("https://api.openai.com/v1/chat/completions", {
+    "messages": [
+        {"role": "system", "content": "You are a helpful assistant named Sage Bot created by Naved and Tanu."},
+        {"role": "user", "content": message}
+    ],
+    "model": "gpt-3.5-turbo"
+}, {
+                headers: {
+                    "Authorization": "Bearer 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",
+                    "Content-Type": "application/json"
+                    
+                }
+            })
+            .then(function (response){
+                // Append the chatbot's response to the chat window
+                var chatbotResponse = response.data.choices[0].message.content;
+                appendMessage("Sage Bot", chatbotResponse);
+                speak(chatbotResponse, startVoiceRecognition); // Speak the chatbot's response
+              
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+        }
+
+        // Function to append a message to the chat window
+        function appendMessage(sender, message) {
+            var chatWindow = document.getElementById("chat-window");
+            var messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+            messageElement.innerHTML = "<strong>" + sender + ":</strong> " + message;
+            chatWindow.appendChild(messageElement);
+        }
+        
+        // Function to handle voice recognition
+        function startVoiceRecognition() {
+            var recognition = new webkitSpeechRecognition() || SpeechRecognition();
+            recognition.interimResults = true;
+            recognition.lang = "en-US";
+
+            recognition.onresult = function (event) {
+                var result = event.results[event.results.length - 1][0].transcript;
+                document.getElementById("message-input").value = result;
+                sendMessage(result); // Send the message as soon as it's recognized
+            };
+
+            recognition.start();
+             // Update the UI to indicate listening
+             document.getElementById("listening-indicator").style.display = "block";
+
+             
+
+
+recognition.onend = function () {
+    // Update the UI to hide listening indicator
+    document.getElementById("listening-indicator").style.display = "none";
+};
+        }
+
+        // Function to speak a message
+        function speak(message) {
+            var speechSynthesis = window.speechSynthesis;
+            var utterance = new SpeechSynthesisUtterance(message);
+            speechSynthesis.speak(utterance);
+        }
+        
+    </script>
+    <style>
+        #chat-window {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        #listening-indicator {
+            display: none;
+            color: blue;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Chatbot with speech recognition and voice output</h1>
+    <div id="chat-window"></div>
+    <input type="text" id="message-input" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startVoiceRecognition()">Start Voice Recognition</button>
+    <div id="listening-indicator">Listening...</div>
+</body>
+</html>
